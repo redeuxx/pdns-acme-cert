@@ -12,7 +12,7 @@ Supports installing certificates into **IIS** or **Active Directory LDAPS**.
 - Run as **Administrator**
 - [posh-acme](https://github.com/rmbolger/Posh-ACME) — installed automatically on first run if missing
 - PowerDNS with the HTTP API enabled
-- For IIS installs: IIS Management Tools (`WebAdministration` module)
+- For IIS installs: IIS Management Tools (`WebAdministration` module) — see [below](#webadministration-module)
 
 ---
 
@@ -107,6 +107,41 @@ The Domain Controller auto-selects a certificate from `Cert:\LocalMachine\My` at
 ## Email notifications
 
 Configure the `EMAIL NOTIFICATIONS` section in `config.ps1`. An email is sent on both success and failure. Failure emails include the error message. Leave `$SmtpUsername` and `$SmtpPassword` as empty strings if your SMTP server does not require authentication.
+
+---
+
+## WebAdministration module
+
+The `WebAdministration` module is required for IIS installs. It ships with Windows and is not available on PSGallery — it must be enabled as a Windows Feature.
+
+**Check if already installed:**
+
+```powershell
+Get-Module -ListAvailable -Name WebAdministration
+```
+
+No output means it is not installed.
+
+**Install on Windows Server:**
+
+```powershell
+Install-WindowsFeature -Name Web-Mgmt-Tools
+```
+
+**Install on Windows 10/11:**
+
+```powershell
+Enable-WindowsOptionalFeature -Online -FeatureName IIS-ManagementConsole
+```
+
+Both commands require Administrator. A reboot may be required. Verify the install worked:
+
+```powershell
+Import-Module WebAdministration
+Get-WebSite
+```
+
+If `Get-WebSite` lists your sites without error, the module is ready.
 
 ---
 
