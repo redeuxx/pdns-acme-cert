@@ -9,7 +9,7 @@ function Install-CertToLDAP {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$PfxPath,
-        [Parameter(Mandatory)][string]$PfxPassword,
+        [Parameter(Mandatory)][SecureString]$PfxPassword,
         [Parameter(Mandatory)]
         [ValidateSet('ADLDAPS','Standalone')]
         [string]$LdapType,
@@ -33,7 +33,7 @@ function Install-CertToLDAP {
 function Install-ADLDAPSCert {
     param(
         [string]$PfxPath,
-        [string]$PfxPassword,
+        [SecureString]$PfxPassword,
         [string]$RestartMode
     )
 
@@ -44,15 +44,13 @@ function Install-ADLDAPSCert {
 
     Write-Host 'Installing certificate for AD LDAPS...'
 
-    $securePass = ConvertTo-SecureString $PfxPassword -AsPlainText -Force
-
     # Snapshot existing certs in the store before import so we know what to clean up.
     $beforeThumbprints = (Get-ChildItem 'Cert:\LocalMachine\My').Thumbprint
 
     $imported = Import-PfxCertificate `
         -FilePath          $PfxPath `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
-        -Password          $securePass `
+        -Password          $PfxPassword `
         -ErrorAction       Stop
 
     $newThumbprint = $imported.Thumbprint
@@ -100,18 +98,17 @@ function Install-ADLDAPSCert {
 function Install-StandaloneLDAPCert {
     param(
         [string]$PfxPath,
-        [string]$PfxPassword,
+        [SecureString]$PfxPassword,
         [string]$ServiceName
     )
 
     Write-Host "Installing certificate for standalone LDAP service '$ServiceName'..."
 
     # Import into the machine store so the service can access it.
-    $securePass = ConvertTo-SecureString $PfxPassword -AsPlainText -Force
     $imported   = Import-PfxCertificate `
         -FilePath          $PfxPath `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
-        -Password          $securePass `
+        -Password          $PfxPassword `
         -ErrorAction       Stop
 
     Write-Host "Certificate imported. Thumbprint: $($imported.Thumbprint)"

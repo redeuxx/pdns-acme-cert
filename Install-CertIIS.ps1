@@ -8,7 +8,7 @@ function Install-CertToIIS {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$PfxPath,
-        [Parameter(Mandatory)][string]$PfxPassword,
+        [Parameter(Mandatory)][SecureString]$PfxPassword,
         [Parameter(Mandatory)][string]$SiteName,
         [string]$BindingPort  = '443',
         [string]$HostHeader   = ''
@@ -17,7 +17,12 @@ function Install-CertToIIS {
     # IMPORT MODULE
 
     if (-not (Get-Module -ListAvailable -Name WebAdministration)) {
-        throw 'WebAdministration module not found. Ensure IIS Management Tools are installed.'
+        throw (
+            'WebAdministration module not found. ' +
+            'Install IIS Management Tools then re-run.' + "`n" +
+            '  Server OS : Install-WindowsFeature -Name Web-Mgmt-Tools' + "`n" +
+            '  Desktop   : Enable-WindowsOptionalFeature -Online -FeatureName IIS-ManagementConsole'
+        )
     }
     Import-Module WebAdministration -ErrorAction Stop
 
@@ -25,11 +30,10 @@ function Install-CertToIIS {
 
     Write-Host "Importing certificate from $PfxPath..."
 
-    $securePass = ConvertTo-SecureString $PfxPassword -AsPlainText -Force
     $imported   = Import-PfxCertificate `
         -FilePath      $PfxPath `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
-        -Password      $securePass `
+        -Password      $PfxPassword `
         -ErrorAction   Stop
 
     $thumbprint = $imported.Thumbprint
