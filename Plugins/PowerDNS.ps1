@@ -115,7 +115,7 @@ function Add-DnsTxt {
     # Add the new TXT value if not already present.
     $quoted = "`"$TxtValue`""
     if ($allRecords | Where-Object { $_.content -eq $quoted }) {
-        Write-Verbose "TXT record '$TxtValue' already present on $fqdn — skipping add."
+        Write-Verbose "TXT record '$TxtValue' already present on $fqdn - skipping add."
         return
     }
     $allRecords += @{ content = $quoted; disabled = $false }
@@ -161,7 +161,7 @@ function Remove-DnsTxt {
 
     $existing = $zone.rrsets | Where-Object { $_.name -eq $fqdn -and $_.type -eq 'TXT' }
     if (-not $existing) {
-        Write-Verbose "No TXT records found for $fqdn — nothing to remove."
+        Write-Verbose "No TXT records found for $fqdn - nothing to remove."
         return
     }
 

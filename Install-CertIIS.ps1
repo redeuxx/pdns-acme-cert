@@ -67,7 +67,7 @@ function Install-CertToIIS {
         $binding.DeleteSslCertificate()
         Write-Host 'Removed existing SSL certificate from binding.'
     } catch {
-        # No cert was assigned yet — safe to continue.
+        # No cert was assigned yet - safe to continue.
     }
 
     $binding.AddSslCertificate($thumbprint, 'My')

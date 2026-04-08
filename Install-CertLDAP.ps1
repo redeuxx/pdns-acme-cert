@@ -123,6 +123,6 @@ function Install-StandaloneLDAPCert {
         Restart-Service -Name $ServiceName -Force -ErrorAction Stop
         Write-Host "Service '$ServiceName' restarted."
     } else {
-        Write-Warning "Service '$ServiceName' not found. Skipping restart — restart it manually."
+        Write-Warning "Service '$ServiceName' not found. Skipping restart - restart it manually."
     }
 }
