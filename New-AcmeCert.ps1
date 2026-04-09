@@ -29,7 +29,7 @@ function Invoke-CertIssuance {
     # posh-acme loads plugins from the DnsPlugins folder inside its module directory.
     # Copy our plugin there if it is not already current.
     $moduleBase  = (Get-Module Posh-ACME).ModuleBase
-    $pluginDest  = Join-Path $moduleBase 'DnsPlugins'
+    $pluginDest  = Join-Path $moduleBase 'Plugins'
 
     if (-not (Test-Path $pluginDest)) {
         New-Item -ItemType Directory -Path $pluginDest | Out-Null

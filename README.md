@@ -154,3 +154,9 @@ If `Get-WebSite` lists your sites without error, the module is ready.
 **Scheduled task finds no ACME account** — the ACME account is registered under the Windows user profile of whoever ran the first issuance. If the task runs as SYSTEM, the first run must also be done as SYSTEM. See [docs/scheduled-task.md](docs/scheduled-task.md).
 
 **Rate limited by Let's Encrypt** — use `$AcmeServer = 'LE_STAGE'` while testing. Production rate limits allow 5 duplicate certificates per week per domain.
+
+**posh-acme fails to install on Windows Server 2019** — `Install-Module` may fail with SSL/TLS errors if the server's cipher suite list is missing `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384` / `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`, which PSGallery requires. Apply the Best Practices template using [IIS Crypto CLI](https://www.nartac.com/Products/IISCrypto) and reboot:
+
+```powershell
+.\IISCryptoCli.exe /template best
+```
