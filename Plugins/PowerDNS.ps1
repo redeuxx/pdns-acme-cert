@@ -19,7 +19,10 @@ function Invoke-PdnsApi {
         [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
     }
 
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $tls12 = [Net.SecurityProtocolType]::Tls12
+    if (-not ([Net.ServicePointManager]::SecurityProtocol -band $tls12)) {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor $tls12
+    }
 
     $params = @{
         Method      = $Method

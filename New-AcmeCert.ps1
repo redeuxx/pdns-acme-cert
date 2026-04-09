@@ -16,6 +16,12 @@ function Invoke-CertIssuance {
         [switch]$Force
     )
 
+    # PS 5.1 may default to TLS 1.0. Enable TLS 1.2 if it is not already active.
+    $tls12 = [Net.SecurityProtocolType]::Tls12
+    if (-not ([Net.ServicePointManager]::SecurityProtocol -band $tls12)) {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor $tls12
+    }
+
     # ENSURE MODULE
 
     if (-not (Get-Module -ListAvailable -Name Posh-ACME)) {
