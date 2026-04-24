@@ -30,13 +30,15 @@ function Install-CertToIIS {
 
     Write-Host "Importing certificate from $PfxPath..."
 
-    $imported   = Import-PfxCertificate `
+    $imported   = @(Import-PfxCertificate `
         -FilePath      $PfxPath `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
         -Password      $PfxPassword `
-        -ErrorAction   Stop
+        -ErrorAction   Stop)
+    $endEntity  = $imported | Where-Object { $_.HasPrivateKey } | Select-Object -First 1
+    if (-not $endEntity) { $endEntity = $imported[0] }
 
-    $thumbprint = $imported.Thumbprint
+    $thumbprint = $endEntity.Thumbprint
     Write-Host "Certificate imported. Thumbprint: $thumbprint"
 
     # FIND BINDING

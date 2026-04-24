@@ -45,7 +45,7 @@ function Install-ADLDAPSCert {
     Write-Host 'Installing certificate for AD LDAPS...'
 
     # Snapshot existing certs in the store before import so we know what to clean up.
-    $beforeThumbprints = (Get-ChildItem 'Cert:\LocalMachine\My').Thumbprint
+    $beforeThumbprints = @(Get-ChildItem 'Cert:\LocalMachine\My' | Select-Object -ExpandProperty Thumbprint)
 
     $imported = @(Import-PfxCertificate `
         -FilePath          $PfxPath `
