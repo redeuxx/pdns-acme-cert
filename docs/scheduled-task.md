@@ -63,37 +63,120 @@ Run the registration script. It creates and configures the task in one step.
 
 ## First Run — ACME Account Registration
 
-posh-acme stores ACME account state on disk under the profile of the account running it.
-When the scheduled task runs as **SYSTEM**, the state lives at:
+posh-acme stores ACME account state (ACME key pair, server URL, cached cert) on disk under
+the profile of the account that ran it. When the scheduled task runs as **SYSTEM**, that state
+lives at:
 
 ```
 C:\Windows\System32\config\systemprofile\AppData\Local\Posh-ACME
 ```
 
-**You must perform the first run as SYSTEM** so the account is registered under the correct profile.
-Do this before relying on the scheduled task:
+If you ran `Invoke-CertRenewal.ps1` interactively as yourself first, that registered the ACME
+account under **your** profile — not SYSTEM's. The scheduled task will fail trying to look up an
+account that does not exist in the SYSTEM profile.
+
+**Always do the first run as SYSTEM**, before relying on the scheduled task.
+
+---
+
+### Get PsExec
+
+PsExec is part of the free [Sysinternals Suite](https://learn.microsoft.com/en-us/sysinternals/downloads/psexec).
 
 ```powershell
-# Launch a SYSTEM shell using PsExec (from Sysinternals)
-psexec -s -i powershell.exe
+# Download PsExec directly (run as Administrator):
+Invoke-WebRequest -Uri 'https://download.sysinternals.com/files/PSTools.zip' -OutFile "$env:TEMP\PSTools.zip"
+Expand-Archive -Path "$env:TEMP\PSTools.zip" -DestinationPath "$env:TEMP\PSTools"
+Copy-Item "$env:TEMP\PSTools\PsExec64.exe" -Destination 'C:\Windows\System32\PsExec64.exe'
+```
 
-# Inside that shell:
-cd C:\path\to\pdns-acme-cert
+Or download manually from: `https://learn.microsoft.com/en-us/sysinternals/downloads/psexec`
+
+---
+
+### Run the first issuance as SYSTEM
+
+Open an **elevated** PowerShell prompt (Run as Administrator), then:
+
+```powershell
+# Open an interactive SYSTEM shell
+PsExec64.exe -s -i powershell.exe
+```
+
+Accept the PsExec EULA if prompted (first run only). A new PowerShell window opens running as SYSTEM.
+
+Verify the identity in that window:
+
+```powershell
+[System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+# Should output: NT AUTHORITY\SYSTEM
+```
+
+Then run the renewal script:
+
+```powershell
+Set-Location 'C:\path\to\pdns-acme-cert'
 .\Invoke-CertRenewal.ps1
 ```
 
-Or trigger the task immediately after registering it:
+On first run this will:
+1. Install posh-acme (if not already installed AllUsers scope)
+2. Register a new ACME account with Let's Encrypt
+3. Issue the certificate via DNS-01 challenge
+4. Install the certificate (IIS or LDAP depending on `$CertTarget`)
+5. Send an email notification if configured
+
+Subsequent scheduled task runs reuse the registered account and only renew when the
+certificate is within 30 days of expiry.
+
+---
+
+### Verify success
+
+After the SYSTEM shell run completes without errors, confirm the account state exists:
+
+```powershell
+Test-Path 'C:\Windows\System32\config\systemprofile\AppData\Local\Posh-ACME'
+# Should be True
+```
+
+Then trigger the scheduled task once to confirm it works end-to-end:
 
 ```powershell
 Start-ScheduledTask -TaskName 'ACME-CertRenewal'
-```
-
-Then check the result:
-
-```powershell
+Start-Sleep -Seconds 10
 (Get-ScheduledTaskInfo -TaskName 'ACME-CertRenewal').LastTaskResult
-# 0 = success
+# 0 = success; anything else = failure (see Troubleshooting below)
 ```
+
+---
+
+### Troubleshooting exit code 1
+
+If the task exits with code 1, enable logging to capture the error:
+
+**Option 1 — Log file** (edit the task action arguments):
+```
+-NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "& 'C:\path\to\Invoke-CertRenewal.ps1' *>> 'C:\Logs\cert-renewal.log'"
+```
+
+**Option 2 — Re-run interactively as SYSTEM** with PsExec to see live output:
+```powershell
+PsExec64.exe -s -i powershell.exe
+# In the SYSTEM shell:
+Set-Location 'C:\path\to\pdns-acme-cert'
+.\Invoke-CertRenewal.ps1
+```
+
+Common causes:
+| Symptom | Cause | Fix |
+|---|---|---|
+| `No ACME account found` | First run not done as SYSTEM | Run PsExec steps above |
+| `Configuration file not found` | `config.ps1` missing | Copy `config.example.ps1` to `config.ps1` and fill in values |
+| `PfxPassword` variable not found | `$PfxPassword` missing from `config.ps1` | Add `$PfxPassword = 'poshacme'` (or your chosen value) |
+| TLS / SSL errors | PowerDNS self-signed cert | Set `$PdnsSkipSslVerify = $true` in `config.ps1` |
+| DNS NXDOMAIN during validation | TXT record not yet visible on all NS | Increase `$PdnsPropagationTimeout` (300 recommended) |
+| `WebAdministration module not found` | IIS management tools not installed | `Install-WindowsFeature -Name Web-Mgmt-Tools` |
 
 ---
 

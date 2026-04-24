@@ -165,7 +165,7 @@ function Add-DnsTxt {
         $existing    = $zone.rrsets | Where-Object { $_.name -eq $fqdn -and $_.type -eq 'TXT' }
         $allRecords  = @()
         if ($existing) {
-            $allRecords = $existing.records | ForEach-Object { @{ content = $_.content; disabled = $false } }
+            $allRecords = @($existing.records | ForEach-Object { @{ content = $_.content; disabled = $false } })
         }
     } catch {
         $allRecords = @()
