@@ -16,6 +16,10 @@ function Invoke-CertIssuance {
         [switch]$Force
     )
 
+    # posh-acme accesses optional properties on ACME response objects that may not
+    # always be present. Strict mode would turn those into hard errors.
+    Set-StrictMode -Off
+
     # PS 5.1 may default to TLS 1.0. Enable TLS 1.2 if it is not already active.
     $tls12 = [Net.SecurityProtocolType]::Tls12
     if (-not ([Net.ServicePointManager]::SecurityProtocol -band $tls12)) {
