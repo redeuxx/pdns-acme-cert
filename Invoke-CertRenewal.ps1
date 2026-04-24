@@ -76,7 +76,13 @@ try {
     throw
 }
 
-$pfxPassword = $cert.PfxPassSecure
+if ($cert.PSObject.Properties['PfxPassSecure'] -and $cert.PfxPassSecure) {
+    $pfxPassword = $cert.PfxPassSecure
+} elseif ($cert.PSObject.Properties['PfxPass'] -and $cert.PfxPass) {
+    $pfxPassword = ConvertTo-SecureString $cert.PfxPass -AsPlainText -Force
+} else {
+    $pfxPassword = New-Object System.Security.SecureString
+}
 $pfxPath     = [string]$cert.PfxFullChain
 
 # INSTALL CERTIFICATE
