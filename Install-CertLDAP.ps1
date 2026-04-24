@@ -67,6 +67,7 @@ function Install-ADLDAPSCert {
     $newNames = @($endEntity.DnsNameList | ForEach-Object { $_.Unicode })
 
     foreach ($tp in $beforeThumbprints) {
+        if ($tp -eq $newThumbprint) { continue }
         $old = Get-Item "Cert:\LocalMachine\My\$tp" -ErrorAction SilentlyContinue
         if (-not $old) { continue }
 
