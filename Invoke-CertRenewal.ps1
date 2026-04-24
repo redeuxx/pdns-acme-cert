@@ -80,6 +80,11 @@ try {
     throw
 }
 
+if (-not $cert) {
+    Write-Host '=== NO RENEWAL NEEDED ==='
+    exit 0
+}
+
 $pfxPassword = ConvertTo-SecureString $PfxPassword -AsPlainText -Force
 $pfxPath     = [string]$cert.PfxFullChain
 

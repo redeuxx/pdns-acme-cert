@@ -95,10 +95,15 @@ function Invoke-CertIssuance {
     }
 
     try {
-        New-PACertificate @certParams | Out-Null
+        $newCert = New-PACertificate @certParams
     } catch {
         Write-Error "Certificate issuance failed: $_"
         throw
+    }
+
+    if (-not $newCert) {
+        Write-Host 'Certificate is not due for renewal. Skipping.'
+        return $null
     }
 
     $cert = Get-PACertificate -MainDomain $primaryDomain
