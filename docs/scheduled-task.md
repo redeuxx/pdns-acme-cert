@@ -8,7 +8,7 @@ This document explains how to set up automated certificate renewal as a Windows 
 
 - PowerShell 5.1
 - Run all setup steps as **Administrator**
-- `config.ps1` fully configured (see the root of the repo)
+- `config.ps1` present and configured — copy `config.example.ps1` to `config.ps1` and fill in your values
 - posh-acme installed: `Install-Module Posh-ACME -Scope AllUsers`
 - The ACME account must be registered **before** the scheduled task runs for the first time (see below)
 

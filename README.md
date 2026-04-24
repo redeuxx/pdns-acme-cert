@@ -163,6 +163,8 @@ If `Get-WebSite` lists your sites without error, the module is ready.
 
 **PowerDNS API SSL errors** — set `$PdnsSkipSslVerify = $true` if the PowerDNS API uses a self-signed certificate.
 
+**SMTP SSL errors** — set `$SmtpSkipSslVerify = $true` if the SMTP server uses a self-signed certificate.
+
 **Scheduled task finds no ACME account** — the ACME account is registered under the Windows user profile of whoever ran the first issuance. If the task runs as SYSTEM, the first run must also be done as SYSTEM. See [docs/scheduled-task.md](docs/scheduled-task.md).
 
 **Rate limited by Let's Encrypt** — use `$AcmeServer = 'LE_STAGE'` while testing. Production rate limits allow 5 duplicate certificates per week per domain.
