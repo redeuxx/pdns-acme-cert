@@ -101,7 +101,7 @@ function Install-ADLDAPSCert {
             if ($ready) {
                 Write-Host "LDAPS listener ready. DC will now offer certificate $newThumbprint for LDAPS."
             } else {
-                Write-Warning "LDAPS listener did not come up within 120s. The certificate is installed — LDAPS may need more time or a reboot."
+                Write-Warning "LDAPS listener did not come up within 120s. The certificate is installed  - LDAPS may need more time or a reboot."
             }
         }
         'Reboot' {
