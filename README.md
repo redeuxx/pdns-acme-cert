@@ -20,7 +20,7 @@ Supports installing certificates into **IIS** or **Active Directory LDAPS**.
 
 | File | Purpose |
 |---|---|
-| `config.ps1` | All configuration — edit this before running anything |
+| `config.example.ps1` | Configuration template — copy to `config.ps1` and fill in your values |
 | `Invoke-CertRenewal.ps1` | Main entry point — issues and installs the certificate |
 | `New-AcmeCert.ps1` | posh-acme issuance logic |
 | `Install-CertIIS.ps1` | Binds the certificate to an IIS site |
@@ -36,7 +36,13 @@ Supports installing certificates into **IIS** or **Active Directory LDAPS**.
 
 ### 1. Configure
 
-Copy `config.ps1` and fill in all values. Key settings:
+Copy `config.example.ps1` to `config.ps1` and fill in your values. `config.ps1` is gitignored so your credentials stay local.
+
+```powershell
+Copy-Item config.example.ps1 config.ps1
+```
+
+Key settings:
 
 ```powershell
 # Your domain(s) — single, wildcard, or both as a SAN cert
@@ -56,7 +62,7 @@ $PdnsApiKey     = 'your-api-key-here'
 $CertTarget     = 'IIS'
 ```
 
-See `config.ps1` for the full list of options including SMTP notification settings.
+See `config.example.ps1` for the full list of options including SMTP notification settings.
 
 ### 2. Test with Let's Encrypt staging
 
@@ -106,7 +112,13 @@ The Domain Controller auto-selects a certificate from `Cert:\LocalMachine\My` at
 
 ## Email notifications
 
-Configure the `EMAIL NOTIFICATIONS` section in `config.ps1`. An email is sent on both success and failure. Failure emails include the error message. Leave `$SmtpUsername` and `$SmtpPassword` as empty strings if your SMTP server does not require authentication.
+Configure the `EMAIL NOTIFICATIONS` section in `config.ps1`. An email is sent on both success and failure. Failure emails include the error message.
+
+**Open relay** (no authentication): leave `$SmtpUsername` and `$SmtpPassword` as empty strings and set `$SmtpUseSsl = $false`.
+
+**Authenticated relay**: set `$SmtpUsername`, `$SmtpPassword`, and `$SmtpPort` to match your server. Set `$SmtpUseSsl = $true` if the server requires it.
+
+**Self-signed SMTP certificate**: set `$SmtpSkipSslVerify = $true` to bypass certificate validation (useful on internal mail servers).
 
 ---
 
