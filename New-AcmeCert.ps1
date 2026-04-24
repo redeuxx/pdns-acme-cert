@@ -85,6 +85,7 @@ function Invoke-CertIssuance {
         Plugin          = 'PowerDNS'
         PluginArgs      = $PluginArgs
         DnsSleep        = $DnsPropagationDelay
+        PfxPassSecure   = New-Object System.Security.SecureString
         ErrorAction     = 'Stop'
     }
 
