@@ -35,10 +35,11 @@ if (-not (Test-Path $ConfigPath)) {
 # BUILD PLUGIN ARGS
 
 $pluginArgs = @{
-    PdnsBaseUrl       = $PdnsBaseUrl
-    PdnsApiKey        = $PdnsApiKey
-    PdnsServerId      = $PdnsServerId
-    PdnsSkipSslVerify = $PdnsSkipSslVerify
+    PdnsBaseUrl              = $PdnsBaseUrl
+    PdnsApiKey               = $PdnsApiKey
+    PdnsServerId             = $PdnsServerId
+    PdnsSkipSslVerify        = $PdnsSkipSslVerify
+    PdnsPropagationTimeout   = $PdnsPropagationTimeout
 }
 
 $notifyParams = @{

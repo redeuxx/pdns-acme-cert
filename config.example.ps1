@@ -16,11 +16,15 @@ $Domains        = @('example.com')
 $PdnsBaseUrl    = 'https://pdns.example.com:8081'
 $PdnsApiKey     = 'your-api-key-here'
 $PdnsServerId   = 'localhost'
-$PdnsSkipSslVerify = $false     # Set $true if PowerDNS uses a self-signed certificate
+$PdnsSkipSslVerify       = $false   # Set $true if PowerDNS uses a self-signed certificate
+# Seconds to actively poll all authoritative nameservers for the zone after creating the TXT
+# record, confirming visibility before Let's Encrypt validates. Set to 0 to disable.
+# Recommended when using LE_PROD (multi-perspective validation requires all NS servers to agree).
+$PdnsPropagationTimeout  = 300
 
 # DNS PROPAGATION WAIT
-# Seconds to wait after creating the DNS TXT record before requesting validation.
-# Increase if your DNS TTL is high or propagation is slow.
+# Additional fixed sleep (seconds) after the propagation check completes.
+# Can usually be left at 30 when PdnsPropagationTimeout is enabled.
 $DnsPropagationDelay = 30
 
 # CERTIFICATE TARGET

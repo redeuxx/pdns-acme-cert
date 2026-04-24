@@ -80,6 +80,61 @@ function Get-PdnsZone {
     return $best
 }
 
+function Wait-DnsPropagation {
+    param(
+        [string]$RecordName,
+        [string]$TxtValue,
+        [string]$ZoneName,
+        [int]$TimeoutSeconds
+    )
+
+    if ($TimeoutSeconds -le 0) { return }
+
+    $bare = $RecordName.TrimEnd('.')
+
+    try {
+        $nsResults = Resolve-DnsName -Name $ZoneName -Type NS -ErrorAction Stop
+        $nsHosts   = @($nsResults | Where-Object { $_.Type -eq 'NS' } | ForEach-Object { $_.NameHost })
+    } catch {
+        Write-Warning "Could not resolve NS records for ${ZoneName}: $_. Skipping propagation check."
+        return
+    }
+
+    if ($nsHosts.Count -eq 0) {
+        Write-Warning "No NS records found for ${ZoneName}. Skipping propagation check."
+        return
+    }
+
+    Write-Host "Waiting for TXT record to propagate to $($nsHosts.Count) nameserver(s): $($nsHosts -join ', ')"
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $start    = Get-Date
+
+    while ((Get-Date) -lt $deadline) {
+        $allSeen = $true
+        foreach ($ns in $nsHosts) {
+            try {
+                $results = Resolve-DnsName -Name $bare -Type TXT -Server $ns -ErrorAction Stop
+                $found   = $results | Where-Object { $_.Type -eq 'TXT' -and $_.Strings -contains $TxtValue }
+                if (-not $found) { $allSeen = $false; break }
+            } catch {
+                $allSeen = $false; break
+            }
+        }
+
+        if ($allSeen) {
+            Write-Host "DNS propagation complete ($([int]((Get-Date) - $start).TotalSeconds)s)."
+            return
+        }
+
+        $elapsed = [int]((Get-Date) - $start).TotalSeconds
+        Write-Host "  [${elapsed}s] Not yet visible on all nameservers. Retrying in 15s..."
+        Start-Sleep -Seconds 15
+    }
+
+    Write-Warning "DNS propagation check timed out after ${TimeoutSeconds}s. Proceeding anyway."
+}
+
 # PLUGIN CONTRACT FUNCTIONS
 
 function Add-DnsTxt {
@@ -89,8 +144,9 @@ function Add-DnsTxt {
         [Parameter(Mandatory)][string]$TxtValue,
         [Parameter(Mandatory)][string]$PdnsBaseUrl,
         [Parameter(Mandatory)][string]$PdnsApiKey,
-        [string]$PdnsServerId    = 'localhost',
-        [bool]$PdnsSkipSslVerify = $false
+        [string]$PdnsServerId          = 'localhost',
+        [bool]$PdnsSkipSslVerify       = $false,
+        [int]$PdnsPropagationTimeout   = 0
     )
 
     # Ensure fully-qualified record name.
@@ -119,26 +175,29 @@ function Add-DnsTxt {
     $quoted = "`"$TxtValue`""
     if ($allRecords | Where-Object { $_.content -eq $quoted }) {
         Write-Verbose "TXT record '$TxtValue' already present on $fqdn - skipping add."
-        return
+    } else {
+        $allRecords += @{ content = $quoted; disabled = $false }
+
+        $patch = @{
+            rrsets = @(
+                @{
+                    name       = $fqdn
+                    type       = 'TXT'
+                    ttl        = 60
+                    changetype = 'REPLACE'
+                    records    = $allRecords
+                }
+            )
+        }
+
+        Invoke-PdnsApi -Method PATCH -Url $url -ApiKey $PdnsApiKey `
+            -Body $patch -SkipSslVerify $PdnsSkipSslVerify | Out-Null
+
+        Write-Verbose "Added TXT record: $fqdn = $TxtValue"
     }
-    $allRecords += @{ content = $quoted; disabled = $false }
 
-    $patch = @{
-        rrsets = @(
-            @{
-                name       = $fqdn
-                type       = 'TXT'
-                ttl        = 60
-                changetype = 'REPLACE'
-                records    = $allRecords
-            }
-        )
-    }
-
-    Invoke-PdnsApi -Method PATCH -Url $url -ApiKey $PdnsApiKey `
-        -Body $patch -SkipSslVerify $PdnsSkipSslVerify | Out-Null
-
-    Write-Verbose "Added TXT record: $fqdn = $TxtValue"
+    Wait-DnsPropagation -RecordName $RecordName -TxtValue $TxtValue `
+        -ZoneName $zoneName -TimeoutSeconds $PdnsPropagationTimeout
 }
 
 function Remove-DnsTxt {
@@ -148,8 +207,9 @@ function Remove-DnsTxt {
         [Parameter(Mandatory)][string]$TxtValue,
         [Parameter(Mandatory)][string]$PdnsBaseUrl,
         [Parameter(Mandatory)][string]$PdnsApiKey,
-        [string]$PdnsServerId    = 'localhost',
-        [bool]$PdnsSkipSslVerify = $false
+        [string]$PdnsServerId          = 'localhost',
+        [bool]$PdnsSkipSslVerify       = $false,
+        [int]$PdnsPropagationTimeout   = 0
     )
 
     $fqdn = if ($RecordName.EndsWith('.')) { $RecordName } else { "$RecordName." }
@@ -209,8 +269,9 @@ function Save-DnsTxt {
     param(
         [Parameter(Mandatory)][string]$PdnsBaseUrl,
         [Parameter(Mandatory)][string]$PdnsApiKey,
-        [string]$PdnsServerId    = 'localhost',
-        [bool]$PdnsSkipSslVerify = $false
+        [string]$PdnsServerId          = 'localhost',
+        [bool]$PdnsSkipSslVerify       = $false,
+        [int]$PdnsPropagationTimeout   = 0
     )
     # PowerDNS applies PATCH changes immediately; nothing to flush.
     Write-Verbose "Save-DnsTxt: PowerDNS applies changes immediately, no flush required."
