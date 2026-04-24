@@ -81,12 +81,11 @@ function Invoke-CertIssuance {
     Write-Host "Requesting certificate for: $($Domains -join ', ')"
 
     $certParams = @{
-        Domain          = $Domains
-        Plugin          = 'PowerDNS'
-        PluginArgs      = $PluginArgs
-        DnsSleep        = $DnsPropagationDelay
-        PfxPassSecure   = New-Object System.Security.SecureString
-        ErrorAction     = 'Stop'
+        Domain      = $Domains
+        Plugin      = 'PowerDNS'
+        PluginArgs  = $PluginArgs
+        DnsSleep    = $DnsPropagationDelay
+        ErrorAction = 'Stop'
     }
 
     if ($Force) {
