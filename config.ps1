@@ -39,13 +39,14 @@ $LdapType       = 'ADLDAPS'
 $LdapServiceName = 'slapd'
 
 # EMAIL NOTIFICATIONS
-$SmtpServer     = 'smtp.example.com'
-$SmtpPort       = 587
-$SmtpUseSsl     = $true
-$SmtpUsername   = 'certbot@example.com'
-$SmtpPassword   = 'your-smtp-password-here'   # Leave empty string if no auth required
-$EmailFrom      = 'certbot@example.com'
-$EmailTo        = @('admin@example.com')       # One or more recipients
+$SmtpServer        = 'smtp.example.com'
+$SmtpPort          = 25
+$SmtpUseSsl        = $false
+$SmtpSkipSslVerify = $false    # Set $true if SMTP server uses a self-signed certificate
+$SmtpUsername      = ''        # Leave empty for open relay (no authentication)
+$SmtpPassword      = ''        # Leave empty for open relay (no authentication)
+$EmailFrom         = 'certbot@example.com'
+$EmailTo           = @('admin@example.com')    # One or more recipients
 
 # RESTART BEHAVIOR
 # For ADLDAPS: 'Service' restarts only the NTDS/Kerberos services; 'Reboot' reboots the DC.

@@ -42,14 +42,15 @@ $pluginArgs = @{
 }
 
 $notifyParams = @{
-    Domains      = $Domains
-    SmtpServer   = $SmtpServer
-    SmtpPort     = $SmtpPort
-    SmtpUseSsl   = $SmtpUseSsl
-    SmtpUsername = $SmtpUsername
-    SmtpPassword = $SmtpPassword
-    EmailFrom    = $EmailFrom
-    EmailTo      = $EmailTo
+    Domains           = $Domains
+    SmtpServer        = $SmtpServer
+    SmtpPort          = $SmtpPort
+    SmtpUseSsl        = $SmtpUseSsl
+    SmtpSkipSslVerify = $SmtpSkipSslVerify
+    SmtpUsername      = $SmtpUsername
+    SmtpPassword      = $SmtpPassword
+    EmailFrom         = $EmailFrom
+    EmailTo           = $EmailTo
 }
 
 # ISSUE CERTIFICATE

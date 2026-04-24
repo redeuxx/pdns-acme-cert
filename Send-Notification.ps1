@@ -14,6 +14,7 @@ function Send-CertNotification {
         [Parameter(Mandatory)][string]$SmtpServer,
         [Parameter(Mandatory)][int]$SmtpPort,
         [Parameter(Mandatory)][bool]$SmtpUseSsl,
+        [bool]$SmtpSkipSslVerify = $false,
         [string]$SmtpUsername,
         [string]$SmtpPassword,
         [Parameter(Mandatory)][string]$EmailFrom,
@@ -69,11 +70,18 @@ Error   : $ErrorMessage
         $mailParams.Credential = $credential
     }
 
+    if ($SmtpSkipSslVerify) {
+        [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+    }
+
     try {
         Send-MailMessage @mailParams
         Write-Host "Notification email sent to: $($EmailTo -join ', ')"
     } catch {
-        # Never let a notification failure crash the main script.
         Write-Warning "Failed to send notification email: $_"
+    } finally {
+        if ($SmtpSkipSslVerify) {
+            [Net.ServicePointManager]::ServerCertificateValidationCallback = $null
+        }
     }
 }
