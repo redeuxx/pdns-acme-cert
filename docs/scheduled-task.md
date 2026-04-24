@@ -1,6 +1,12 @@
 # Scheduled Task Setup
 
-This document explains how to set up automated certificate renewal as a Windows scheduled task.
+Automated renewal is the intended production mode. `Invoke-CertRenewal.ps1` is a no-op when
+the certificate has more than 30 days remaining, so running it daily is safe. When the 30-day
+window is hit, it issues a new certificate and installs it automatically.
+
+The setup order matters: **register the task first, then do the first run as SYSTEM**. Running
+interactively as yourself registers the ACME account under your profile — not SYSTEM's — and the
+scheduled task will fail looking for an account that does not exist.
 
 ---
 
@@ -10,7 +16,6 @@ This document explains how to set up automated certificate renewal as a Windows 
 - Run all setup steps as **Administrator**
 - `config.ps1` present and configured — copy `config.example.ps1` to `config.ps1` and fill in your values
 - posh-acme installed: `Install-Module Posh-ACME -Scope AllUsers`
-- The ACME account must be registered **before** the scheduled task runs for the first time (see below)
 
 ---
 
@@ -177,19 +182,6 @@ Common causes:
 | TLS / SSL errors | PowerDNS self-signed cert | Set `$PdnsSkipSslVerify = $true` in `config.ps1` |
 | DNS NXDOMAIN during validation | TXT record not yet visible on all NS | Increase `$PdnsPropagationTimeout` (300 recommended) |
 | `WebAdministration module not found` | IIS management tools not installed | `Install-WindowsFeature -Name Web-Mgmt-Tools` |
-
----
-
-## Renewal Behavior
-
-posh-acme automatically skips renewal if the certificate is **more than 30 days from expiry**.
-Running daily is safe — most runs will be no-ops.
-
-To force a renewal regardless of expiry:
-
-```powershell
-.\Invoke-CertRenewal.ps1 -Force
-```
 
 ---
 

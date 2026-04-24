@@ -64,29 +64,38 @@ $CertTarget     = 'IIS'
 
 See `config.example.ps1` for the full list of options including SMTP notification settings.
 
-### 2. Test with Let's Encrypt staging
-
-Set `$AcmeServer = 'LE_STAGE'` in `config.ps1` before your first run. Staging certificates are not trusted by browsers but let you verify the full flow without hitting rate limits.
-
-### 3. Run manually
-
-```powershell
-.\Invoke-CertRenewal.ps1
-```
-
-Switch to `LE_PROD` once staging succeeds, then run again with `-Force` to issue a real certificate:
-
-```powershell
-.\Invoke-CertRenewal.ps1 -Force
-```
-
-### 4. Set up automatic renewal
+### 2. Register the scheduled task
 
 ```powershell
 .\Register-ScheduledTask.ps1
 ```
 
-See [docs/scheduled-task.md](docs/scheduled-task.md) for details, including the required first-run step when using the SYSTEM account.
+This creates a daily renewal task that runs as **SYSTEM**. See [docs/scheduled-task.md](docs/scheduled-task.md) for custom options (run time, task name, service account).
+
+### 3. First run as SYSTEM
+
+posh-acme stores ACME account state in the profile of the account that runs it. Because the scheduled task runs as SYSTEM, **the first run must also be done as SYSTEM** to register the account in the right profile.
+
+Use PsExec (from [Sysinternals](https://learn.microsoft.com/en-us/sysinternals/downloads/psexec)) to open a SYSTEM shell:
+
+```powershell
+PsExec64.exe -s -i powershell.exe
+```
+
+Then inside that shell:
+
+```powershell
+Set-Location 'C:\path\to\pdns-acme-cert'
+.\Invoke-CertRenewal.ps1
+```
+
+Use `$AcmeServer = 'LE_STAGE'` for this first run to verify the full flow without hitting production rate limits. Once staging succeeds, switch to `LE_PROD` and run again with `-Force`:
+
+```powershell
+.\Invoke-CertRenewal.ps1 -Force
+```
+
+See [docs/scheduled-task.md](docs/scheduled-task.md) for the complete walkthrough, including PsExec setup and troubleshooting exit code 1.
 
 ---
 
