@@ -93,7 +93,7 @@ function Invoke-CertIssuance {
     }
 
     try {
-        New-PACertificate @certParams
+        New-PACertificate @certParams | Out-Null
     } catch {
         Write-Error "Certificate issuance failed: $_"
         throw
