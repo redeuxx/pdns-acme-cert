@@ -72,30 +72,22 @@ See `config.example.ps1` for the full list of options including SMTP notificatio
 
 This creates a daily renewal task that runs as **SYSTEM**. See [docs/scheduled-task.md](docs/scheduled-task.md) for custom options (run time, task name, service account).
 
-### 3. First run as SYSTEM
+### 3. Verify with a manual trigger
 
-posh-acme stores ACME account state in the profile of the account that runs it. Because the scheduled task runs as SYSTEM, **the first run must also be done as SYSTEM** to register the account in the right profile.
-
-Use PsExec (from [Sysinternals](https://learn.microsoft.com/en-us/sysinternals/downloads/psexec)) to open a SYSTEM shell:
+Use `$AcmeServer = 'LE_STAGE'` in `config.ps1` for an initial test run to verify the full flow without hitting production rate limits. Then trigger the task manually:
 
 ```powershell
-PsExec64.exe -s -i powershell.exe
+Start-ScheduledTask -TaskName 'ACME-CertRenewal'
 ```
 
-Then inside that shell:
+The task runs as SYSTEM, registers the ACME account, issues the certificate, and installs it — all automatically. Once staging succeeds, switch to `LE_PROD` and force a re-issue:
 
 ```powershell
-Set-Location 'C:\path\to\pdns-acme-cert'
-.\Invoke-CertRenewal.ps1
+# Edit config.ps1: $AcmeServer = 'LE_PROD'
+Start-ScheduledTask -TaskName 'ACME-CertRenewal'
 ```
 
-Use `$AcmeServer = 'LE_STAGE'` for this first run to verify the full flow without hitting production rate limits. Once staging succeeds, switch to `LE_PROD` and run again with `-Force`:
-
-```powershell
-.\Invoke-CertRenewal.ps1 -Force
-```
-
-See [docs/scheduled-task.md](docs/scheduled-task.md) for the complete walkthrough, including PsExec setup and troubleshooting exit code 1.
+After that, the daily schedule handles everything. See [docs/scheduled-task.md](docs/scheduled-task.md) for troubleshooting.
 
 ---
 
@@ -174,7 +166,7 @@ If `Get-WebSite` lists your sites without error, the module is ready.
 
 **SMTP SSL errors** — set `$SmtpSkipSslVerify = $true` if the SMTP server uses a self-signed certificate.
 
-**Scheduled task finds no ACME account** — the ACME account is registered under the Windows user profile of whoever ran the first issuance. If the task runs as SYSTEM, the first run must also be done as SYSTEM. See [docs/scheduled-task.md](docs/scheduled-task.md).
+**Scheduled task finds no ACME account** — this happens if you ran `Invoke-CertRenewal.ps1` interactively as your own user before ever letting the scheduled task run. The task runs as SYSTEM and has a separate profile, so it won't find the account you registered. Delete the posh-acme data from your user profile (`C:\Users\<you>\AppData\Local\Posh-ACME`) and trigger the task to let it register the account as SYSTEM.
 
 **Rate limited by Let's Encrypt** — use `$AcmeServer = 'LE_STAGE'` while testing. Production rate limits allow 5 duplicate certificates per week per domain.
 
