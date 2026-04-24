@@ -86,7 +86,23 @@ function Install-ADLDAPSCert {
             Write-Host 'Restarting Active Directory Domain Services and Kerberos Key Distribution Center...'
             Restart-Service -Name 'NTDS'  -Force -ErrorAction Stop
             Restart-Service -Name 'kdc'   -Force -ErrorAction SilentlyContinue
-            Write-Host "Services restarted. DC will now offer certificate $newThumbprint for LDAPS."
+
+            # NTDS reports Running before the LDAPS listener is ready.
+            # Poll port 636 until it accepts connections (up to 120s).
+            Write-Host 'Waiting for LDAPS listener on port 636...'
+            $deadline = (Get-Date).AddSeconds(120)
+            $ready    = $false
+            while ((Get-Date) -lt $deadline) {
+                $tcp = Test-NetConnection -ComputerName localhost -Port 636 -WarningAction SilentlyContinue -InformationLevel Quiet
+                if ($tcp) { $ready = $true; break }
+                Start-Sleep -Seconds 5
+            }
+
+            if ($ready) {
+                Write-Host "LDAPS listener ready. DC will now offer certificate $newThumbprint for LDAPS."
+            } else {
+                Write-Warning "LDAPS listener did not come up within 120s. The certificate is installed — LDAPS may need more time or a reboot."
+            }
         }
         'Reboot' {
             Write-Warning 'ADRestartMode is set to Reboot. The system will restart in 15 seconds.'
