@@ -78,7 +78,7 @@ try {
 
 # posh-acme exports PFX files with no password by default.
 $pfxPassword = New-Object System.Security.SecureString
-$pfxPath     = $cert.PfxFullChain
+$pfxPath     = [string]$cert.PfxFullChain
 
 # INSTALL CERTIFICATE
 
