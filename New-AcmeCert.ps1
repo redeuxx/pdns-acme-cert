@@ -61,12 +61,9 @@ function Invoke-CertIssuance {
     }
 
     # ACME SERVER
+    # Always call Set-PAServer to ensure the cached server object has current fields.
 
-    $currentServer = Get-PAServer -ErrorAction SilentlyContinue
-    if (-not $currentServer -or $currentServer.Name -ne $AcmeServer) {
-        Write-Host "Setting ACME server to $AcmeServer..."
-        Set-PAServer $AcmeServer
-    }
+    Set-PAServer $AcmeServer
 
     # ACME ACCOUNT
 
