@@ -68,6 +68,7 @@ $issueParams = @{
     PluginDir             = "$PSScriptRoot\Plugins"
     PluginArgs            = $pluginArgs
     DnsPropagationDelay   = $DnsPropagationDelay
+    PfxPass               = $PfxPassword
 }
 if ($Force) { $issueParams.Force = $true }
 
@@ -78,7 +79,7 @@ try {
     throw
 }
 
-$pfxPassword = ConvertTo-SecureString 'poshacme' -AsPlainText -Force
+$pfxPassword = ConvertTo-SecureString $PfxPassword -AsPlainText -Force
 $pfxPath     = [string]$cert.PfxFullChain
 
 # INSTALL CERTIFICATE

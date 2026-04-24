@@ -13,6 +13,7 @@ function Invoke-CertIssuance {
         [Parameter(Mandatory)][string]$PluginDir,
         [Parameter(Mandatory)][hashtable]$PluginArgs,
         [int]$DnsPropagationDelay = 30,
+        [string]$PfxPass = 'poshacme',
         [switch]$Force
     )
 
@@ -85,7 +86,7 @@ function Invoke-CertIssuance {
         Plugin      = 'PowerDNS'
         PluginArgs  = $PluginArgs
         DnsSleep    = $DnsPropagationDelay
-        PfxPass     = 'poshacme'
+        PfxPass     = $PfxPass
         ErrorAction = 'Stop'
     }
 

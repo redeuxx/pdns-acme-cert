@@ -27,6 +27,12 @@ $PdnsPropagationTimeout  = 300
 # Can usually be left at 30 when PdnsPropagationTimeout is enabled.
 $DnsPropagationDelay = 30
 
+# LOCAL PFX PASSWORD
+# Password applied to the PFX file stored on disk by posh-acme. This protects the file
+# container format only - the real security is filesystem permissions. Must be non-empty
+# (Windows DPAPI is used instead when blank, which breaks import under a different account).
+$PfxPassword    = 'poshacme'
+
 # CERTIFICATE TARGET
 # What to install the certificate into.
 # Valid values: 'IIS', 'LDAP'
