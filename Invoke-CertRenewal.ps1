@@ -78,7 +78,7 @@ try {
     throw
 }
 
-$pfxPassword = New-Object System.Security.SecureString
+$pfxPassword = ConvertTo-SecureString 'poshacme' -AsPlainText -Force
 $pfxPath     = [string]$cert.PfxFullChain
 
 # INSTALL CERTIFICATE
