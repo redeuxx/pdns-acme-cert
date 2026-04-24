@@ -47,20 +47,24 @@ function Install-ADLDAPSCert {
     # Snapshot existing certs in the store before import so we know what to clean up.
     $beforeThumbprints = (Get-ChildItem 'Cert:\LocalMachine\My').Thumbprint
 
-    $imported = Import-PfxCertificate `
+    $imported = @(Import-PfxCertificate `
         -FilePath          $PfxPath `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
         -Password          $PfxPassword `
-        -ErrorAction       Stop
+        -ErrorAction       Stop)
 
-    $newThumbprint = $imported.Thumbprint
+    # Full-chain PFX files return multiple objects (end-entity + intermediates).
+    # Only the end-entity cert has a private key.
+    $endEntity = $imported | Where-Object { $_.HasPrivateKey } | Select-Object -First 1
+    if (-not $endEntity) { $endEntity = $imported[0] }
+    $newThumbprint = $endEntity.Thumbprint
     Write-Host "Certificate imported. Thumbprint: $newThumbprint"
 
     # REMOVE OLD MATCHING CERTIFICATES
     # Find certs that were present before the import and share at least one Subject name
     # with the new cert. These are candidates the DC would otherwise compete with.
 
-    $newNames = @($imported.DnsNameList | ForEach-Object { $_.Unicode })
+    $newNames = @($endEntity.DnsNameList | ForEach-Object { $_.Unicode })
 
     foreach ($tp in $beforeThumbprints) {
         $old = Get-Item "Cert:\LocalMachine\My\$tp" -ErrorAction SilentlyContinue
@@ -105,13 +109,15 @@ function Install-StandaloneLDAPCert {
     Write-Host "Installing certificate for standalone LDAP service '$ServiceName'..."
 
     # Import into the machine store so the service can access it.
-    $imported   = Import-PfxCertificate `
+    $imported  = @(Import-PfxCertificate `
         -FilePath          $PfxPath `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
         -Password          $PfxPassword `
-        -ErrorAction       Stop
+        -ErrorAction       Stop)
+    $endEntity = $imported | Where-Object { $_.HasPrivateKey } | Select-Object -First 1
+    if (-not $endEntity) { $endEntity = $imported[0] }
 
-    Write-Host "Certificate imported. Thumbprint: $($imported.Thumbprint)"
+    Write-Host "Certificate imported. Thumbprint: $($endEntity.Thumbprint)"
 
     # The standalone LDAP service must be configured separately to point at this
     # certificate (e.g. via its own config file). This script only handles the
