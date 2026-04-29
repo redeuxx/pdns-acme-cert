@@ -186,8 +186,13 @@ function Add-DnsTxt {
             )
         }
 
-        Invoke-PdnsApi -Method PATCH -Url $url -ApiKey $PdnsApiKey `
-            -Body $patch -SkipSslVerify $PdnsSkipSslVerify | Out-Null
+        try {
+            Invoke-PdnsApi -Method PATCH -Url $url -ApiKey $PdnsApiKey `
+                -Body $patch -SkipSslVerify $PdnsSkipSslVerify | Out-Null
+        } catch {
+            if ($_ -notmatch 'No change for RRset') { throw }
+            Write-Verbose "TXT record already current on PowerDNS (no change needed)."
+        }
 
         Write-Verbose "Added TXT record: $fqdn = $TxtValue"
     }
