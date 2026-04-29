@@ -96,18 +96,7 @@ function Wait-DnsPropagation {
     if ($Servers.Count -gt 0) {
         $nsHosts = $Servers
     } else {
-        try {
-            $nsResults = Resolve-DnsName -Name $ZoneName -Type NS -ErrorAction Stop
-            $nsHosts   = @($nsResults | Where-Object { $_.Type -eq 'NS' } | ForEach-Object { $_.NameHost })
-        } catch {
-            Write-Warning "Could not resolve NS records for ${ZoneName}: $_. Skipping propagation check."
-            return
-        }
-
-        if ($nsHosts.Count -eq 0) {
-            Write-Warning "No NS records found for ${ZoneName}. Skipping propagation check."
-            return
-        }
+        $nsHosts = @('1.1.1.1', '8.8.8.8')
     }
 
     Write-Host "Waiting for TXT record to propagate to $($nsHosts.Count) nameserver(s): $($nsHosts -join ', ')"
@@ -121,9 +110,10 @@ function Wait-DnsPropagation {
             try {
                 $results = Resolve-DnsName -Name $bare -Type TXT -Server $ns -ErrorAction Stop
                 $found   = $results | Where-Object { $_.Type -eq 'TXT' -and $_.Strings -contains $TxtValue }
-                if (-not $found) { $allSeen = $false; break }
+                if (-not $found) { $allSeen = $false }
             } catch {
-                $allSeen = $false; break
+                Write-Warning "  Query to $ns failed: $_"
+                $allSeen = $false
             }
         }
 

@@ -21,9 +21,7 @@ $PdnsSkipSslVerify       = $false   # Set $true if PowerDNS uses a self-signed c
 # record, confirming visibility before Let's Encrypt validates. Set to 0 to disable.
 # Recommended when using LE_PROD (multi-perspective validation requires all NS servers to agree).
 $PdnsPropagationTimeout  = 300
-# DNS servers to poll during propagation check. Leave empty (@()) to auto-discover from NS records.
-# Specify explicit servers if NS lookup fails, or to check resolvers rather than authoritative NS.
-# Example: $PdnsPropagationServers = @('8.8.8.8', '1.1.1.1', 'ns1.example.com')
+# DNS servers to poll during propagation check. Defaults to 1.1.1.1 and 8.8.8.8 when empty.
 $PdnsPropagationServers  = @()
 
 # DNS PROPAGATION WAIT
