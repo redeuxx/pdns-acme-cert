@@ -133,7 +133,7 @@ function Wait-DnsPropagation {
         }
 
         $elapsed = [int]((Get-Date) - $start).TotalSeconds
-        Write-Host "  [${elapsed}s] Not yet visible on all nameservers. Retrying in 15s..."
+        Write-Host "  [${elapsed}s] TXT $bare not yet visible on all nameservers. Retrying in 15s..."
         Start-Sleep -Seconds 15
     }
 
