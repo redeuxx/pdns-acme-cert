@@ -29,6 +29,11 @@ function Invoke-CertIssuance {
 
     # ENSURE MODULE
 
+    if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue | Where-Object { $_.Version -ge '2.8.5.201' })) {
+        Write-Host 'Installing NuGet provider...'
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force | Out-Null
+    }
+
     if (-not (Get-Module -ListAvailable -Name Posh-ACME)) {
         Write-Host 'posh-acme not found. Installing from PSGallery...'
         Install-Module -Name Posh-ACME -Scope AllUsers -Force -AllowClobber
