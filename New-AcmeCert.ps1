@@ -114,5 +114,11 @@ function Invoke-CertIssuance {
     Write-Host "Certificate issued. Thumbprint: $($cert.Thumbprint)"
     Write-Host "PFX path: $($cert.PfxFullChain)"
 
-    return $cert
+    # Extract into a plain PSCustomObject so strict mode in the caller can access
+    # these properties without ETS script property issues from the posh-acme module.
+    return [PSCustomObject]@{
+        Thumbprint   = $cert.Thumbprint
+        NotAfter     = $cert.NotAfter
+        PfxFullChain = [string]$cert.PfxFullChain
+    }
 }
